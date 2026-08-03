@@ -153,8 +153,13 @@ duplicated here.
 
 Trained adapters (v3.1 and v4.1) are hosted on Hugging Face, not in this repo:
 [huggingface.co/ctogaurav/GLM_OCR](https://huggingface.co/ctogaurav/GLM_OCR) — MIT licensed,
-usable commercially. That page also covers merging + converting to GGUF for LM Studio/Ollama/
-llama.cpp, since these are LoRA adapters rather than a standalone model file.
+usable commercially.
+
+**Want to run v4.1 in LM Studio / Ollama / llama.cpp?** A ready-to-download, verified-working
+GGUF is at [ctogaurav/GLM_OCR-GGUF](https://huggingface.co/ctogaurav/GLM_OCR-GGUF) — tested
+end-to-end on GPU, output checked against this repo's own `samples/` ground truth, not just
+"it loaded." Producing it required patching a real bug in llama.cpp's own conversion code for
+this architecture; that fix is documented there too.
 
 ## Environment
 
