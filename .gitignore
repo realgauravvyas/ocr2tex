@@ -1,0 +1,22 @@
+# secrets
+.env
+*.env
+!.env.example
+
+# python
+__pycache__/
+*.pyc
+
+# model weights / large artifacts (not stored in this repo)
+*.safetensors
+*.bin
+*.pt
+*.ckpt
+
+# logs
+*.log
+*.err
+*.pid
+
+# OS / editor
+.vscode/

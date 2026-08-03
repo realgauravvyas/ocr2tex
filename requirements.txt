@@ -1,0 +1,11 @@
+torch>=2.1
+transformers>=5.5
+peft>=0.18
+accelerate
+flask
+pillow
+opencv-python
+openai
+requests
+pandas
+huggingface_hub
