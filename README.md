@@ -152,7 +152,27 @@ duplicated here.
 ## Model weights
 
 Trained adapters (v3.1 and v4.1) are hosted on Hugging Face, not in this repo:
-[huggingface.co/ctogaurav/GLM_OCR](https://huggingface.co/ctogaurav/GLM_OCR)
+[huggingface.co/ctogaurav/GLM_OCR](https://huggingface.co/ctogaurav/GLM_OCR) — MIT licensed,
+usable commercially. That page also covers merging + converting to GGUF for LM Studio/Ollama/
+llama.cpp, since these are LoRA adapters rather than a standalone model file.
+
+## Environment
+
+Everything — pipeline, training, and benchmarking — ran on a single personal machine, no cloud
+compute.
+
+| | |
+|---|---|
+| GPU | NVIDIA RTX 3060, 12GB VRAM |
+| Python | 3.11.9 |
+| PyTorch | 2.10.0+cu130 |
+| Transformers | 5.9.0 |
+| PEFT | 0.18.1 (verified against both v3.1's and v4.1's `adapter_config.json`) |
+| LaTeX | MiKTeX (`pdflatex`, used for Stage 8 validation and benchmark compile-rate scoring) |
+
+**Training time**: v3.1 — ~5 hours (1,168 steps). v4.1 — ~12.7 hours (3,144 steps; estimated from
+steps × sec/step, since the run was interrupted and resumed across multiple sessions on shared
+personal hardware — the logged "elapsed" field only covers the final resumed segment).
 
 ## Setup
 
