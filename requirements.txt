@@ -9,3 +9,6 @@ openai
 requests
 pandas
 huggingface_hub
+
+# tools/ocr_proxy.py and tools/resize_for_ocr.py only need flask, requests, pillow
+# (already listed above) — no extra dependencies
