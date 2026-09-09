@@ -87,7 +87,13 @@ python training/glm_ocr/train_glm_ocr.py
 
 Fine-tuned on the **identical 12,575-page corpus** as GLM-OCR v4.1, so the comparison in the
 results table above isolates model/recipe differences, not data access. `train_unlimited_ocr.py`
-is the original v1 run; `train_baidu_v2.py` + `gen_baidu_ft_v2*.py` produced the v2 variant.
+is the original v1 run; `train_baidu_v2.py` + `gen_baidu_ft_v2*.py` produced the v2 variant;
+`v3/` holds a later redesigned run (rsLoRA, MoE-aware expert ranks) that was never finished.
+
+See [`training/baidu/README.md`](training/baidu/README.md) for what each version is, and for the
+scoring caveat that makes v3's numbers non-comparable to everything else in this repo. The
+adapters themselves are on Hugging Face at
+[ctogaurav/Unlimited-OCR-math-latex](https://huggingface.co/ctogaurav/Unlimited-OCR-math-latex).
 
 ## 3. Benchmark (`benchmark/`)
 
@@ -160,6 +166,12 @@ GGUF is at [ctogaurav/GLM_OCR-GGUF](https://huggingface.co/ctogaurav/GLM_OCR-GGU
 end-to-end on GPU, output checked against this repo's own `samples/` ground truth, not just
 "it loaded." Producing it required patching a real bug in llama.cpp's own conversion code for
 this architecture; that fix is documented there too.
+
+The Baidu comparison arm is published too, so the benchmark table above is reproducible rather
+than something you have to take on trust:
+[ctogaurav/Unlimited-OCR-math-latex](https://huggingface.co/ctogaurav/Unlimited-OCR-math-latex)
+(v1, v2, v3 adapters, MIT). Those lose to GLM-OCR on compile rate and are ~2x slower — they are
+the baseline, not the recommendation.
 
 ## Environment
 
