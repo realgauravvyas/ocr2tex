@@ -78,6 +78,27 @@ We train and compare three major iterations of GLM-OCR using Low-Rank Adaptation
 | Hyperparameter / Detail | v3.1 | v4.1 | **v5.0 (Latest SOTA)** |
 |---|:---:|:---:|:---:|
 | **Training Pages** | 4,672 | 12,575 | **12,575+** |
+| **Compute Hardware** | Local RTX 3060 (12GB) | Local RTX 3060 (12GB) | **Hybrid: Local RTX 3060 (Phase 1) ➔ Cloud A100 (Phase 2)** |
+| **Warm Start Strategy** | From v3 adapter | From v4 adapter | **Warm start from step 250 (local RTX 3060 checkpoint)** |
+| **Learning Rate** | 2e-5 | 1e-5 | **1e-5 (Cosine decay with linear warmup)** |
+| **Precision** | FP16 mixed | FP16 mixed | **FP16 (Local) ➔ Native BF16 (A100)** |
+| **Effective Batch Size** | 8 (Batch 1 × Accum 8) | 8 (Batch 1 × Accum 8) | **8 (Batch 1 × Accum 8)** |
+| **LoRA Rank ($r$) / Alpha ($lpha$)** | r=32, α=64 | r=32, α=64 | **r=32, α=64, dropout=0.05** |
+| **Target Projections** | All 7 linear layers | All 7 linear layers | **q, k, v, o, gate, up, down projections** |
+| **Total Training Steps** | 1,168 | 3,144 | **3,945 steps** |
+| **Final Loss** | 0.108 (val) | 0.164 (val) | **0.0008 (step loss) / 0.1764 (avg train loss)** |
+| **Step Speed** | ~45–50 s / step | ~57 s / step | **57.05 s/step (Local) ➔ 3.80 s/step (A100)** ⚡ |
+| **Total Training Time** | ~5 hours | ~12.7 hours | **~4.68 hours on A100 (saved ~58 hours)** |
+
+### 🖥️ Local Workstation Setup vs. Cloud Handoff (v5.0):
+
+Training for v5.0 began locally on an **NVIDIA GeForce RTX 3060 12GB**:
+- **Local Micro-Settings:** Micro-batch size `1`, Gradient Accumulation `8` (effective batch `8`), FP16 mixed precision, `max_length=3584`, `max_image_tokens=1536`.
+- **Local Thermal Profile:** VRAM was nearly saturated at **11.2 GB / 12 GB**, and GPU core temperature hit **88°C** under continuous load, inducing thermal throttling (~57.05s/step).
+- **Warm Startup (Step 250 Handoff):** The first **250 steps** were trained on the local RTX 3060 (checkpoint saved at loss ~0.42). To protect local hardware from a 62-hour continuous thermal ordeal, training was transitioned to an **NVIDIA A100-SXM4-80GB** on Lightning AI Studio, warm-starting from the 250-step state and accelerating the remaining steps at **3.80s/step** down to a final convergence loss of **0.0008**.
+
+---|:---:|:---:|:---:|
+| **Training Pages** | 4,672 | 12,575 | **12,575+** |
 | **Compute Hardware** | Local RTX 3060 (12GB) | Local RTX 3060 (12GB) | **NVIDIA A100-SXM4-80GB (Lightning AI)** |
 | **Learning Rate** | 2e-5 | 1e-5 | **1e-5 (Cosine decay with warmup)** |
 | **Precision** | FP16 mixed | FP16 mixed | **Native BF16** |
