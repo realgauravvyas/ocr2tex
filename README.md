@@ -134,6 +134,7 @@ Upload a page of your own handwriting and compare base vs. fine-tuned output, no
 
 - [Colab v3.1](https://colab.research.google.com/drive/1-uW5d5C9cRrGnvLMpE7cko0wnrygBQma)
 - [Colab v4.1](https://colab.research.google.com/drive/1SC0mfy98CQdm3ARDd3zuD8EGrWKgnl5-)
+- [Colab v5.0 (Interactive 700-Page Studio)](./colab/notebooks/GLM_ocr_v5_Demo.ipynb)
 
 Local copies (with real adapter Drive IDs already filled in) are in `colab/notebooks/`.
 

@@ -1,0 +1,10 @@
+﻿torch
+torchvision
+transformers>=4.48.0
+peft>=0.14.0
+accelerate>=1.2.0
+bitsandbytes>=0.45.0
+pillow>=10.0.0
+sentencepiece
+protobuf
+numpy
