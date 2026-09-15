@@ -83,7 +83,7 @@ We train and compare three major iterations of GLM-OCR using Low-Rank Adaptation
 | **Learning Rate** | 2e-5 | 1e-5 | **1e-5 (Cosine decay with linear warmup)** |
 | **Precision** | FP16 mixed | FP16 mixed | **FP16 (Local) ➔ Native BF16 (A100)** |
 | **Effective Batch Size** | 8 (Batch 1 × Accum 8) | 8 (Batch 1 × Accum 8) | **8 (Batch 1 × Accum 8)** |
-| **LoRA Rank ($r$) / Alpha ($\alpha$)** | r=32, α=64 | r=32, α=64 | **r=32, α=64, dropout=0.05** |
+| **LoRA Rank ($r$) / Alpha ($α$)** | r=32, α=64 | r=32, α=64 | **r=32, α=64, dropout=0.05** |
 | **Target Projections** | All 7 linear layers | All 7 linear layers | **q, k, v, o, gate, up, down projections** |
 | **Total Training Steps** | 1,168 | 3,144 | **3,945 steps** |
 | **Final Loss** | 0.108 (val) | 0.164 (val) | **0.0008 (step loss) / 0.1764 (avg train loss)** |

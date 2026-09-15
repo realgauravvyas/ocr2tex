@@ -53,7 +53,7 @@ Before training ran smoothly on the A100, several critical cross-platform and li
 ## 3. Training Run & Final Convergence
 
 - **Base Architecture:** `zai-org/GLM-OCR` (0.9B multimodal vision-language model)
-- **Adapter Type:** PEFT LoRA ($r=32, \alpha=64, \text{dropout}=0.05$)
+- **Adapter Type:** PEFT LoRA ($r=32, α=64, \text{dropout}=0.05$)
 - **LoRA Targets:** All 7 projection layers (`q_proj`, `k_proj`, `v_proj`, `o_proj`, `gate_proj`, `up_proj`, `down_proj`)
 - **Total Steps:** 3,945 steps
 - **Batching:** Micro-batch 1, Gradient Accumulation 8 (Effective batch size = 8)
