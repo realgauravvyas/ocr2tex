@@ -83,7 +83,7 @@ We train and compare three major iterations of GLM-OCR using Low-Rank Adaptation
 | **Learning Rate** | 2e-5 | 1e-5 | **1e-5 (Cosine decay with linear warmup)** |
 | **Precision** | FP16 mixed | FP16 mixed | **FP16 (Local) ➔ Native BF16 (A100)** |
 | **Effective Batch Size** | 8 (Batch 1 × Accum 8) | 8 (Batch 1 × Accum 8) | **8 (Batch 1 × Accum 8)** |
-| **LoRA Rank ($r$) / Alpha ($lpha$)** | r=32, α=64 | r=32, α=64 | **r=32, α=64, dropout=0.05** |
+| **LoRA Rank ($r$) / Alpha ($\alpha$)** | r=32, α=64 | r=32, α=64 | **r=32, α=64, dropout=0.05** |
 | **Target Projections** | All 7 linear layers | All 7 linear layers | **q, k, v, o, gate, up, down projections** |
 | **Total Training Steps** | 1,168 | 3,144 | **3,945 steps** |
 | **Final Loss** | 0.108 (val) | 0.164 (val) | **0.0008 (step loss) / 0.1764 (avg train loss)** |
@@ -97,18 +97,6 @@ Training for v5.0 began locally on an **NVIDIA GeForce RTX 3060 12GB**:
 - **Local Thermal Profile:** VRAM was nearly saturated at **11.2 GB / 12 GB**, and GPU core temperature hit **88°C** under continuous load, inducing thermal throttling (~57.05s/step).
 - **Warm Startup (Step 250 Handoff):** The first **250 steps** were trained on the local RTX 3060 (checkpoint saved at loss ~0.42). To protect local hardware from a 62-hour continuous thermal ordeal, training was transitioned to an **NVIDIA A100-SXM4-80GB** on Lightning AI Studio, warm-starting from the 250-step state and accelerating the remaining steps at **3.80s/step** down to a final convergence loss of **0.0008**.
 
----|:---:|:---:|:---:|
-| **Training Pages** | 4,672 | 12,575 | **12,575+** |
-| **Compute Hardware** | Local RTX 3060 (12GB) | Local RTX 3060 (12GB) | **NVIDIA A100-SXM4-80GB (Lightning AI)** |
-| **Learning Rate** | 2e-5 | 1e-5 | **1e-5 (Cosine decay with warmup)** |
-| **Precision** | FP16 mixed | FP16 mixed | **Native BF16** |
-| **Effective Batch Size** | 8 (Batch 1 × Accum 8) | 8 (Batch 1 × Accum 8) | **8 (Batch 1 × Accum 8)** |
-| **LoRA Rank ($r$) / Alpha ($lpha$)** | r=32, α=64 | r=32, α=64 | **r=32, α=64, dropout=0.05** |
-| **Target Projections** | All 7 linear layers | All 7 linear layers | **q, k, v, o, gate, up, down projections** |
-| **Total Training Steps** | 1,168 | 3,144 | **3,945 steps** |
-| **Final Loss** | 0.108 (val) | 0.164 (val) | **0.0008 (step loss) / 0.1764 (avg train loss)** |
-| **Step Speed** | ~45–50 s / step | ~57 s / step | **3.80 s / step (15.0× faster!)** ⚡ |
-| **Total Training Time** | ~5 hours | ~12.7 hours | **281 minutes (~4.68 hours)** |
 
 > 💡 **Cloud Scaling Impact (v5.0):**  
 > Running 3,945 steps on the local RTX 3060 would have required **~62.5 hours (~2.6 full days)** at 88°C thermal limit. Migrating to the cloud A100 reduced step latency from **57.05s → 3.80s**, finishing the entire run in **under 4.7 hours** and saving ~58 hours of compute time. Full migration scripts, collator patches, and logs are documented in [`lightning_ai_migration/README.md`](./lightning_ai_migration/README.md).
