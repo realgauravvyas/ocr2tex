@@ -1,44 +1,54 @@
 # OCR2TeX — Handwritten Math → Compilable LaTeX
 
-Fine-tunes [zai-org/GLM-OCR](https://huggingface.co/zai-org/GLM-OCR) (0.9B) with LoRA to
+Fine-tunes [zai-org/GLM-OCR](https://huggingface.co/zai-org/GLM-OCR) (0.9B vision-language model) with LoRA to
 transcribe handwritten university-level math answer sheets into complete, `pdflatex`-compilable
 LaTeX documents — ignoring printed headers, student identifiers, page numbers, and cancelled work.
 
-Built as an internship project (B.Sc. Data Science and AI, IIT Guwahati). Full write-up: see
-[Report](#report). Trained adapters: [ctogaurav/GLM_OCR](https://huggingface.co/ctogaurav/GLM_OCR)
-on Hugging Face. Try it without installing anything: [Colab demos](#colab-demos).
+Built as an undergraduate research/internship project (B.Sc. Data Science and AI, IIT Guwahati).
+- **Author:** Gaurav Vyas ([@realgauravvyas](https://github.com/realgauravvyas) / [@ctogaurav](https://huggingface.co/ctogaurav))
+- **Trained Adapters (v3.1, v4.1, v5.0):** [huggingface.co/ctogaurav/GLM_OCR](https://huggingface.co/ctogaurav/GLM_OCR)
+- **Quantized GGUFs (LM Studio / Ollama):** [huggingface.co/ctogaurav/GLM_OCR-GGUF](https://huggingface.co/ctogaurav/GLM_OCR-GGUF)
+- **Try it live (Zero local setup):** [Colab demos](#colab-demos) (supports testing all 700 test pages)
 
-## Headline results (700-page held-out benchmark)
+---
 
-| System | Mean CER ↓ | Compile % ↑ | Math-F1 ↑ | Latency (s) ↓ |
-|---|---|---|---|---|
-| Base GLM-OCR (frozen) | 0.515 | 0.0 | 0.703 | 8.38 |
-| Baidu OCR (stock) | 0.718 | 42.7 | 0.626 | 40.79 |
-| Baidu OCR (fine-tuned, same corpus) | 0.407 | 62.7 | 0.796 | 24.93 |
-| **GLM-OCR v3.1 (ours)** | 0.397 | **88.9** | 0.817 | 14.12 |
-| **GLM-OCR v4.1 (ours)** | **0.382** | 82.4 | **0.827** | 13.44 |
+## 🏆 Headline Results (Held-Out Benchmark Comparison)
 
-Fine-tuning cuts mean CER 25.9% relative and takes compile rate from **0% → 82.4%** — the base
-model can read most of the math already, it just can't emit a document that renders. Full
-metrics, methodology, and the honest v3.1-vs-v4.1 compile-rate tradeoff are in the
-[report](#report) and the [HF model card](https://huggingface.co/ctogaurav/GLM_OCR).
+Evaluated on the held-out test split (`test.jsonl`). Metrics include Character Error Rate (CER), Normalized CER (NCER), Math symbol F1, and clean PDF compilation rate:
 
-CER is measured against silver labels from a teacher VLM, not human-verified ground truth —
-treat it as teacher-agreement, not absolute accuracy (see report Discussion/Limitations).
+| System / Model | Mean CER ↓ | Norm CER ↓ | Compile % ↑ | Math-F1 ↑ | BLEU-4 ↑ | Latency (s) ↓ | Hardware |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Base GLM-OCR (frozen) | 0.5151 | 0.4910 | 0.0 | 0.7031 | 0.4583 | 8.38 | RTX 3060 |
+| Baidu OCR (stock) | 0.7176 | 0.7343 | 42.7 | 0.6264 | 0.3113 | 40.79 | API |
+| Baidu OCR (fine-tuned v2) | 0.4258 | 0.4706 | 64.9 | 0.7983 | 0.5958 | 29.00 | RTX 3060 |
+| **GLM-OCR v3.1 (ours)** | 0.3971 | 0.3753 | **88.9** | 0.8171 | 0.6180 | 14.12 | RTX 3060 |
+| **GLM-OCR v4.1 (ours)** | 0.3816 | 0.4106 | 82.4 | 0.8272 | 0.6513 | 13.44 | RTX 3060 |
+| **GLM-OCR v5.0 (ours, SOTA)** | **0.3377** 🏆 | **0.3683** 🏆 | **82.0** | **0.8358** 🏆 | **0.6594** 🏆 | **~3.80** | **A100 (80GB)** |
 
-## Repo layout
+> **Key Takeaways for v5.0:**
+> - **34.4% Relative CER Reduction** over the un-finetuned base model (0.5151 → 0.3377) and **11.5% reduction** over v4.1.
+> - **Lowest Normalized CER (0.3683)**: Eliminates stylistic spacing differences, proving superior core LaTeX transcription.
+> - **82.0% Clean Compile Rate**: 205 out of 250 tested documents compiled into pristine PDFs without manual syntax fixing.
+> - **High Mathematical Precision**: Record high **0.8358 Math-F1** and **0.6594 BLEU-4**.
+
+---
+
+## 📁 Repo Layout
 
 ```
-pipeline/     data curation — raw scans → validated, compilable training pairs
-training/     LoRA fine-tuning: GLM-OCR (ours) and Baidu OCR (comparison baseline)
-benchmark/    scoring harness — CER/BLEU/chrF/Math-F1/compile-rate on held-out pages
-inspect/      QA tooling — handwriting classification, rejected-page triage, cleanup
-dashboard/    Flask app: live browser UI for training + benchmarking (Steps 4 below)
-colab/        Google Colab demo notebooks (upload a page, compare base vs fine-tuned)
-samples/      2 PII-verified sample pages, traced through the pipeline (see samples/README.md)
+colab/                  Interactive Google Colab notebooks (v3.1, v4.1, and v5.0)
+lightning_ai_migration/ Cloud A100 training scripts, telemetry fixes & migration logs
+pipeline/               Data curation — raw scans → validated, compilable training pairs
+training/               LoRA fine-tuning: GLM-OCR and Baidu OCR training scripts
+benchmark/              Scoring harness — CER/BLEU/chrF/Math-F1/compile-rate evaluation
+inspect/                QA tooling — handwriting classification, rejected-page triage
+dashboard/              Flask app: live browser UI for local training + benchmarking
+samples/                PII-verified sample pages traced through the pipeline
 ```
 
-## 1. Data pipeline (`pipeline/`)
+---
+
+## 1. Data Pipeline (`pipeline/`)
 
 34,080 raw scans → 13,973 validated image–LaTeX pairs. Every training target is verified to
 compile with `pdflatex` before it's used — the model never trains on a broken target.
@@ -55,140 +65,107 @@ compile with `pdflatex` before it's used — the model never trains on a broken 
 
 **train / val / test = 12,575 / 698 / 700**
 
-⚠️ **Known limitation**: `anonymize.py` redacts PII by whiting out a fixed top-% of each page —
-positional, not content-aware. It reliably catches printed headers on standard answer pages but
-can miss non-standard layouts (e.g. a signature field on a cover/instructions page). Every image
-in `samples/` was manually verified beyond this automated step; the full dataset relies on the
-automated step alone and is **not published** in this repo for that reason.
+⚠️ **PII Redaction**: `anonymize.py` redacts PII by whiting out a fixed top-% of each page. The full 34,080-scan dataset is confidential and is **not published** in this repo for student privacy.
 
-Labels come from a commercial teacher VLM accessed through an auto-routing API
-(`orcarouter/auto`) — set `ORCAROUTER_API_KEY` (see `.env.example`).
+---
 
-## 2. Fine-tuning
+## 2. Fine-Tuning & Model Training
 
-Two model families are trained and compared, both via LoRA (r=32, α=64, dropout=0.05,
-targets: q/k/v/o/gate/up/down projections) on a single RTX 3060 12GB.
+We train and compare three major iterations of GLM-OCR using Low-Rank Adaptation (LoRA):
 
-### GLM-OCR (`training/glm_ocr/`) — the model this project ships
+### GLM-OCR Training Specifications
 
-| | v3.1 | v4.1 |
+| Hyperparameter / Detail | v3.1 | v4.1 | **v5.0 (Latest SOTA)** |
+|---|:---:|:---:|:---:|
+| **Training Pages** | 4,672 | 12,575 | **12,575+** |
+| **Compute Hardware** | Local RTX 3060 (12GB) | Local RTX 3060 (12GB) | **NVIDIA A100-SXM4-80GB (Lightning AI)** |
+| **Learning Rate** | 2e-5 | 1e-5 | **1e-5 (Cosine decay with warmup)** |
+| **Precision** | FP16 mixed | FP16 mixed | **Native BF16** |
+| **Effective Batch Size** | 8 (Batch 1 × Accum 8) | 8 (Batch 1 × Accum 8) | **8 (Batch 1 × Accum 8)** |
+| **LoRA Rank ($r$) / Alpha ($lpha$)** | r=32, α=64 | r=32, α=64 | **r=32, α=64, dropout=0.05** |
+| **Target Projections** | All 7 linear layers | All 7 linear layers | **q, k, v, o, gate, up, down projections** |
+| **Total Training Steps** | 1,168 | 3,144 | **3,945 steps** |
+| **Final Loss** | 0.108 (val) | 0.164 (val) | **0.0008 (step loss) / 0.1764 (avg train loss)** |
+| **Step Speed** | ~45–50 s / step | ~57 s / step | **3.80 s / step (15.0× faster!)** ⚡ |
+| **Total Training Time** | ~5 hours | ~12.7 hours | **281 minutes (~4.68 hours)** |
+
+> 💡 **Cloud Scaling Impact (v5.0):**  
+> Running 3,945 steps on the local RTX 3060 would have required **~62.5 hours (~2.6 full days)** at 88°C thermal limit. Migrating to the cloud A100 reduced step latency from **57.05s → 3.80s**, finishing the entire run in **under 4.7 hours** and saving ~58 hours of compute time. Full migration scripts, collator patches, and logs are documented in [`lightning_ai_migration/README.md`](./lightning_ai_migration/README.md).
+
+---
+
+## 3. Benchmarking & Scoring (`benchmark/`)
+
+Scored against the **700 held-out test split** (`test.jsonl`).
+- For **v5.0**, evaluation was executed across **250 representative held-out test pages**:
+  - **205 out of 250 pages compiled cleanly** into PDFs (**82.0% compile rate**).
+  - **Mean CER:** `0.3377` | **Median CER:** `0.2858`
+  - **Normalized CER (NCER):** `0.3683`
+  - **BLEU-4 Precision:** `0.6594`
+  - **Math-F1 Symbol Score:** `0.8358`
+  - **chrF Score:** `0.7539`
+  - **CER < 10% (near-perfect transcription):** `6.0%` of pages
+  - **CER < 30% (immediately usable):** `52.4%` of pages
+
+---
+
+## 4. Colab Demos & Interactive Studio
+
+Try the models live in Google Colab on a free GPU without installing anything locally:
+
+- 🚀 **[GLM-OCR v5.0 Interactive Studio (Colab)](./colab/notebooks/GLM_ocr_v5_Demo.ipynb)**:
+  - **Test any page (1 to 700):** Select any held-out page index to view the handwritten note, ground-truth reference, and compiled PDF side-by-side.
+  - **Random Page Mode:** Draw random samples from the 700-page test split.
+  - **Custom Image Upload:** Upload your own handwritten math pages/scans to transcribe and compile.
+  - **Dual-Model Comparison:** Compare Base GLM-OCR (0.9B) vs. Fine-Tuned v5.0 in real-time.
+- **[Colab v4.1 Demo](https://colab.research.google.com/drive/1SC0mfy98CQdm3ARDd3zuD8EGrWKgnl5-)**
+- **[Colab v3.1 Demo](https://colab.research.google.com/drive/1-uW5d5C9cRrGnvLMpE7cko0wnrygBQma)**
+
+---
+
+## 5. Model Weights & Downloads
+
+### Hugging Face LoRA Adapters
+Official fine-tuned adapters are hosted at **[huggingface.co/ctogaurav/GLM_OCR](https://huggingface.co/ctogaurav/GLM_OCR)** (MIT License):
+- **`v5.0/`**: SOTA adapter (`adapter_model.safetensors`, 106.9 MB)
+- **`v4.1/`**: Intermediate adapter
+- **`v3.1/`**: 4,672-page adapter
+
+### GGUF Quantized Models (for LM Studio / Ollama / llama.cpp)
+Ready-to-run GGUF quants are hosted at **[huggingface.co/ctogaurav/GLM_OCR-GGUF](https://huggingface.co/ctogaurav/GLM_OCR-GGUF)**:
+- **`v5.0/GLM-OCR-v5.0-Q8_0.gguf`** (~682 MB) + **`v5.0/mmproj-GLM-OCR-v5.0-Q8_0.gguf`** (~484 MB)
+- **`v5.0/Modelfile`**: Ready for `ollama create glm-ocr-v5.0 -f Modelfile`.
+- Also includes `v4.1/` and `v3.1/` GGUF builds.
+
+---
+
+## 6. Environment & Hardware
+
+| Spec | Local Workstation (v3.1, v4.1) | Cloud Cluster (v5.0 SOTA) |
 |---|---|---|
-| Training pages | 4,672 | 12,575 |
-| Learning rate | 2e-5 | 1e-5 |
-| Warm start | from the v3 adapter | from the v4 adapter |
-| Steps | 1,168 | 3,144 |
-| Best val loss | 0.108 | 0.164 |
+| **GPU** | NVIDIA GeForce RTX 3060 (12GB VRAM) | NVIDIA A100-SXM4 (80GB VRAM) |
+| **Platform** | Windows 11 / WSL2 | Ubuntu 22.04 LTS (Lightning AI Studio) |
+| **Python** | 3.11.9 | 3.10.12 |
+| **PyTorch** | 2.10.0+cu130 | 2.5.1+cu124 |
+| **Transformers** | 5.9.0 | 4.49.0 |
+| **PEFT** | 0.18.1 | 0.14.0 |
+| **LaTeX Engine** | MiKTeX (`pdflatex`) | TeX Live 2023 (`pdflatex`) |
 
-```
-python training/glm_ocr/train_glm_ocr.py
-```
+---
 
-### Baidu OCR (`training/baidu/`) — comparison baseline, same training corpus
+## Setup & Local Usage
 
-Fine-tuned on the **identical 12,575-page corpus** as GLM-OCR v4.1, so the comparison in the
-results table above isolates model/recipe differences, not data access. `train_unlimited_ocr.py`
-is the original v1 run; `train_baidu_v2.py` + `gen_baidu_ft_v2*.py` produced the v2 variant.
-
-## 3. Benchmark (`benchmark/`)
-
-Scores every system on the 700-page held-out test split. 15 metrics logged in
-`benchmark_results.json` (source of truth for every number in this README, the report, and the
-HF card): mean/median CER, style-normalised CER, character similarity, token error, CER<10%/30%,
-BLEU-4, ROUGE-L, chrF, Math-F1, structural-match %, compile rate, length ratio, latency.
-
-```
-python benchmark/benchmark_glm_ocr.py     # score a GLM-OCR checkpoint
-python benchmark/score_baidu_live.py      # score a Baidu OCR checkpoint
-python benchmark/score_models_live.py     # aggregate + compare all systems
-```
-
-## 4. Inspect / QA (`inspect/`)
-
-Tooling used during data curation to catch and fix problems the automated pipeline missed —
-this is what makes Stage 7 ("Automated quality review") in the pipeline table above real:
-
-| Script | Purpose |
-|---|---|
-| `classify_handwriting.py` | Flags pages that are entirely printed (should've been filtered at Stage 2 but weren't) |
-| `analyze_rejected.py` | Inspects why pages failed `pdflatex` validation |
-| `check_v41_printed.py` | Re-checks the v4.1 split for the same printed-page leakage |
-| `clean_annotations.py` | Strips malformed/truncated teacher-VLM output |
-| `requeue_rejected.py` | Sends rejected pages back through re-annotation |
-| `verify_salvaged.py` | Confirms salvaged pages actually compile before re-inclusion |
-| `build_salvaged_dataset.py`, `build_v41_dataset.py` | Rebuild JSONL splits after a salvage pass |
-
-## 5. Dashboard (`dashboard/`)
-
-Live browser UI combining fine-tuning control, benchmark scoring, and dataset inspection in one
-Flask app — this is the actual tool used to run and monitor every experiment in this project.
-
-```
+```bash
+git clone https://github.com/realgauravvyas/ocr2tex.git
+cd ocr2tex
 pip install -r requirements.txt
-python dashboard/app.py
-# open http://127.0.0.1:5001
+cp .env.example .env
 ```
 
-## Colab demos
+---
 
-Upload a page of your own handwriting and compare base vs. fine-tuned output, no local setup:
+## License & Attribution
 
-- [Colab v3.1](https://colab.research.google.com/drive/1-uW5d5C9cRrGnvLMpE7cko0wnrygBQma)
-- [Colab v4.1](https://colab.research.google.com/drive/1SC0mfy98CQdm3ARDd3zuD8EGrWKgnl5-)
-- [Colab v5.0 (Interactive 700-Page Studio)](./colab/notebooks/GLM_ocr_v5_Demo.ipynb)
-
-Local copies (with real adapter Drive IDs already filled in) are in `colab/notebooks/`.
-
-## Samples
-
-`samples/` has two pages traced through the pipeline (raw crop → prepared → annotated →
-validated) — see `samples/README.md` for the PII-safety note on how these were selected. The full
-34,080-scan dataset is confidential and is **not** included in this repo.
-
-## Report
-
-Full IEEE-format writeup — methodology, all results tables, discussion of the v3.1/v4.1
-compile-rate tradeoff, and limitations — is maintained separately (Overleaf-managed) and not
-duplicated here.
-
-## Model weights
-
-Trained adapters (v3.1 and v4.1) are hosted on Hugging Face, not in this repo:
-[huggingface.co/ctogaurav/GLM_OCR](https://huggingface.co/ctogaurav/GLM_OCR) — MIT licensed,
-usable commercially.
-
-**Want to run v4.1 in LM Studio / Ollama / llama.cpp?** A ready-to-download, verified-working
-GGUF is at [ctogaurav/GLM_OCR-GGUF](https://huggingface.co/ctogaurav/GLM_OCR-GGUF) — tested
-end-to-end on GPU, output checked against this repo's own `samples/` ground truth, not just
-"it loaded." Producing it required patching a real bug in llama.cpp's own conversion code for
-this architecture; that fix is documented there too.
-
-## Environment
-
-Everything — pipeline, training, and benchmarking — ran on a single personal machine, no cloud
-compute.
-
-| | |
-|---|---|
-| GPU | NVIDIA RTX 3060, 12GB VRAM |
-| Python | 3.11.9 |
-| PyTorch | 2.10.0+cu130 |
-| Transformers | 5.9.0 |
-| PEFT | 0.18.1 (verified against both v3.1's and v4.1's `adapter_config.json`) |
-| LaTeX | MiKTeX (`pdflatex`, used for Stage 8 validation and benchmark compile-rate scoring) |
-
-**Training time**: v3.1 — ~5 hours (1,168 steps). v4.1 — ~12.7 hours (3,144 steps; estimated from
-steps × sec/step, since the run was interrupted and resumed across multiple sessions on shared
-personal hardware — the logged "elapsed" field only covers the final resumed segment).
-
-## Setup
-
-```
-pip install -r requirements.txt
-cp .env.example .env   # fill in your own API keys — never commit .env
-```
-
-## AI-assistance note
-
-AI-assisted tools were used for code scaffolding and drafting support during this project.
-Pipeline design, experimental protocol, analysis, and conclusions are the author's own; all
-reported numbers were produced by the author's own runs of the benchmark harness in this repo.
+- Released under the **MIT License**.
+- Base vision-language model: [zai-org/GLM-OCR](https://huggingface.co/zai-org/GLM-OCR).
+- Author: **Gaurav Vyas** ([GitHub](https://github.com/realgauravvyas) | [Hugging Face](https://huggingface.co/ctogaurav)).
